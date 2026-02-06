@@ -1,6 +1,6 @@
 import {Test} from "@nestjs/testing";
-import {KeyResultService} from "./key-result.service";
-import {PrismaService} from "../prisma.service";
+import {KeyResultService} from "../key-result.service";
+import {PrismaService} from "../../prisma.service";
 
 describe('key-result', () => {
 
