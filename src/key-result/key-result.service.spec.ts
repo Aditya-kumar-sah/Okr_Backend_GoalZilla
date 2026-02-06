@@ -1,6 +1,6 @@
 import {Test} from "@nestjs/testing";
-import { PrismaClient } from '@prisma/client'
 import {KeyResultService} from "./key-result.service";
+import {PrismaService} from "../prisma.service";
 
 describe('key-result', () => {
 
@@ -12,37 +12,42 @@ describe('key-result', () => {
     let keyResultService: KeyResultService;
 
 
-    // describe('get all key results', () => {
+    describe('get keyResult for a particular objectiveId', () => {
 
-    beforeEach(async () => {
-        const moduleRef = await Test.createTestingModule({
-            providers: [KeyResultService, {provide: PrismaService, useValue: mockPrismaService}],
+        beforeEach(async () => {
+            const moduleRef = await Test.createTestingModule({
+                providers: [KeyResultService, {provide: PrismaService, useValue: mockPrismaService}],
 
-        }).compile();
-        keyResultService = await moduleRef.resolve(KeyResultService);
-    });
+            }).compile();
+            keyResultService = await moduleRef.resolve(KeyResultService);
+        });
 
-    it('should return all the key results corresponding to the given objective id', () => {
-        const mockKeyResultList = [
-            {
-                id: '1',
-                description: 'Test key result 1',
-                progress: 97,
-                objective_id: '1',
-            },
-            {
-                id: '2',
-                description: 'Test key result 2',
-                progress: 97,
-                objective_id: '1',
-            }
-        ]
+        it('should return all the key results corresponding to the given objective id', async () => {
+            const mockKeyResultList = [
+                {
+                    id: '1',
+                    description: 'Test key result 1',
+                    progress: 97,
+                    objective_id: '1',
+                },
+                {
+                    id: '2',
+                    description: 'Test key result 2',
+                    progress: 97,
+                    objective_id: '1',
+                }
+            ]
 
-        mockPrismaService.keyResult.findMany.mockResolvedValue(mockKeyResultList);
+            mockPrismaService.keyResult.findMany.mockResolvedValue(mockKeyResultList);
 
-        const result = keyResultService.getAll('1');
-        expect(result).toBe(mockKeyResultList);
-        expect(mockPrismaService.keyResult.findMany).toHaveBeenCalledWith(1);
-    });
-    // })
+            const result = await keyResultService.getAll('1');
+            expect(result).toBe(mockKeyResultList);
+            expect(mockPrismaService.keyResult.findMany).toHaveBeenCalledTimes(1);
+            expect(mockPrismaService.keyResult.findMany).toHaveBeenCalledWith({
+                where: {
+                    objective_id: '1',
+                }
+            });
+        });
+    })
 })
