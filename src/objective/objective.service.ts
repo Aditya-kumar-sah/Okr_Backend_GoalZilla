@@ -13,7 +13,7 @@ export class ObjectiveService {
 
 
     async getAll() {
-        return await this.prismaService.objective.findMany({
+        return this.prismaService.objective.findMany({
             include : {
                 keyResult : true,
             }
@@ -24,10 +24,7 @@ export class ObjectiveService {
         try {
             return await this.prismaService.objective.create({
                 data:{
-                    title: objectiveDto.title,
-                    keyResult : {
-                        create : objectiveDto.keyResults
-                    }
+                    title: objectiveDto.title
                 }
             });
         }catch (error) {
@@ -53,13 +50,26 @@ export class ObjectiveService {
         }
     }
 
-    async update(objectiveId:string,updatedObjectiveDto :Partial<ObjectiveDto>){
-        return await this.prismaService.objective.update({
-            where : {
-                id:objectiveId
-            },
-            data : updatedObjectiveDto
-        });
+    async update(objectiveId:string,updatedObjectiveDto :ObjectiveDto){
+          try{
+              return await this.prismaService.objective.update({
+                  where : {
+                      id:objectiveId
+                  },
+                  data : {
+                      title : updatedObjectiveDto.title
+                  }
+              });
+          }
+          catch(error){
+              if(error.code === "P2002"){
+                  throw new ObjectiveTitleDuplicateException(`Objective with title ${updatedObjectiveDto.title} already exists!`);
+              }
+              if(error.code==='P2025'){
+                  throw new ObjectiveNotFoundException("Objective not found",objectiveId)
+              }
+              throw error
+          }
     }
 
     async getObjectiveById(objectiveId: string) {

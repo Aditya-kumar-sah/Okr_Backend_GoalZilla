@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Param, Post, Put, UseFilters} from '@nestjs/common';
+import {Body, Controller, Delete, Get, Param, Post, Put, UseFilters, ValidationPipe} from '@nestjs/common';
 import {ObjectiveDto} from "./dto/objective.dto";
 import {ObjectiveService} from "./objective.service";
 import {ObjectiveNotFoundExceptionFilter, ObjectiveTitleDuplicateExceptionFilter} from "./exception/objectiveError.filter";
@@ -18,7 +18,9 @@ export class ObjectiveController {
     }
 
     @Post()
-    create(@Body() objectiveDto: ObjectiveDto){
+    create(@Body(new ValidationPipe({whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,})) objectiveDto: ObjectiveDto){
         return this.objectiveService.create(objectiveDto);
     }
 
@@ -28,7 +30,9 @@ export class ObjectiveController {
     }
 
     @Put(':objectiveId')
-    update(@Param('objectiveId') objectiveId: string, @Body() updatedObjectiveDto: Partial<ObjectiveDto>){
+    update(@Param('objectiveId') objectiveId: string, @Body(new ValidationPipe({whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,})) updatedObjectiveDto: ObjectiveDto){
         return this.objectiveService.update(objectiveId, updatedObjectiveDto);
     }
 

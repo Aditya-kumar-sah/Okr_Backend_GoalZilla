@@ -1,8 +1,9 @@
-import {Body, Controller, Delete, Get, Param, Post, Put, UseFilters} from '@nestjs/common';
-import {KeyResult} from "./dto/key-result.dto";
+import {Body, Controller, Delete, Get, Param, Post, Put, UseFilters, ValidationPipe} from '@nestjs/common';
+import {KeyResult, UpdateKeyResultDto} from "./dto/key-result.dto";
 import {KeyResultService} from "./key-result.service";
 import {ObjectiveNotFoundExceptionFilter} from "../objective/exception/objectiveError.filter";
 import {KeyResultNotFoundExceptionFilter} from "./exception/keyResult.exception.filter";
+
 
 @Controller('objective/:objectiveId/keyResult')
 @UseFilters(ObjectiveNotFoundExceptionFilter,KeyResultNotFoundExceptionFilter)
@@ -19,7 +20,11 @@ export class KeyResultController {
     @Post()
     create(
         @Param('objectiveId') objectiveId: string,
-        @Body() createKeyResultDto: KeyResult,
+        @Body(new ValidationPipe({
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+        })) createKeyResultDto: KeyResult,
     ) {
         return this.keyResultsService.create(objectiveId, createKeyResultDto);
     }
@@ -30,7 +35,11 @@ export class KeyResultController {
     }
 
     @Put(':keyResultId')
-    update(@Param('keyResultId') keyResultId: string,@Body() keyResult : Partial<KeyResult>){
+    update(@Param('keyResultId') keyResultId: string,@Body(new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+    })) keyResult : UpdateKeyResultDto){
         return this.keyResultsService.update(keyResultId,keyResult);
     }
 

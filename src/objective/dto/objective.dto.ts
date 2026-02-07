@@ -1,6 +1,8 @@
-import {KeyResult} from "../../key-result/dto/key-result.dto";
+import {IsNotEmpty, IsString} from "class-validator";
 
 export class ObjectiveDto {
+
+    @IsString()
+    @IsNotEmpty()
     title: string;
-    keyResults : KeyResult[]
 }
