@@ -3,6 +3,7 @@ import {PrismaService} from "../prisma.service";
 import {KeyResult} from "./dto/key-result.dto";
 import {ObjectiveNotFoundException} from "../objective/exception/objectiveError";
 import {KeyResultNotFoundException} from "./exception/keyResult.exception";
+import { log } from 'node:console';
 @Injectable()
 export class KeyResultService {
     constructor(private readonly prismaService: PrismaService) {}
@@ -49,6 +50,7 @@ export class KeyResultService {
 
     async remove(keyResultId: string) {
        try{
+                    
            return await this.prismaService.keyResult.delete({
                where : {
                    id : keyResultId
