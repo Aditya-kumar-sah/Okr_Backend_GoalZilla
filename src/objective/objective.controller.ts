@@ -1,35 +1,74 @@
-import {Body, Controller, Delete, Get, Param, Post, Put, UseFilters} from '@nestjs/common';
-import {ObjectiveDto} from "./dto/objective.dto";
-import {ObjectiveService} from "./objective.service";
-import {ObjectiveNotFoundExceptionFilter, ObjectiveTitleDuplicateExceptionFilter} from "./exception/objectiveError.filter";
-@UseFilters(ObjectiveNotFoundExceptionFilter,ObjectiveTitleDuplicateExceptionFilter)
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseFilters,
+  ValidationPipe,
+} from '@nestjs/common';
+import { ObjectiveDto } from './dto/objective.dto';
+import { ObjectiveService } from './objective.service';
+import {
+  ObjectiveNotFoundExceptionFilter,
+  ObjectiveTitleDuplicateExceptionFilter,
+} from './exception/objectiveError.filter';
+@UseFilters(
+  ObjectiveNotFoundExceptionFilter,
+  ObjectiveTitleDuplicateExceptionFilter,
+)
 @Controller('objective')
 export class ObjectiveController {
-    constructor(private readonly objectiveService: ObjectiveService) {}
+  constructor(private readonly objectiveService: ObjectiveService) {}
 
-    @Get()
-    getAll(){
-        return this.objectiveService.getAll();
-    }
+  @Get(':objectiveId/isComplete')
+  isComplete(@Param('objectiveId') objectiveId: string) {
+    return this.objectiveService.isComplete(objectiveId);
+  }
 
-    @Get(":objectiveId")
-    getObjectiveById(@Param('objectiveId') objectiveId: string){
-        return this.objectiveService.getObjectiveById(objectiveId);
-    }
+  @Get()
+  getAll() {
+    return this.objectiveService.getAll();
+  }
 
-    @Post()
-    create(@Body() objectiveDto: ObjectiveDto){
-        return this.objectiveService.create(objectiveDto);
-    }
+  @Get(':objectiveId')
+  getObjectiveById(@Param('objectiveId') objectiveId: string) {
+    return this.objectiveService.getObjectiveById(objectiveId);
+  }
 
-    @Delete(":objectiveId")
-    delete(@Param('objectiveId') objectiveId: string){
-        return this.objectiveService.delete(objectiveId)
-    }
+  @Post()
+  create(
+    @Body(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    )
+    objectiveDto: ObjectiveDto,
+  ) {
+    return this.objectiveService.create(objectiveDto);
+  }
 
-    @Put(':objectiveId')
-    update(@Param('objectiveId') objectiveId: string, @Body() updatedObjectiveDto: Partial<ObjectiveDto>){
-        return this.objectiveService.update(objectiveId, updatedObjectiveDto);
-    }
+  @Delete(':objectiveId')
+  delete(@Param('objectiveId') objectiveId: string) {
+    return this.objectiveService.delete(objectiveId);
+  }
 
+  @Put(':objectiveId')
+  update(
+    @Param('objectiveId') objectiveId: string,
+    @Body(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    )
+    updatedObjectiveDto: ObjectiveDto,
+  ) {
+    return this.objectiveService.update(objectiveId, updatedObjectiveDto);
+  }
 }
