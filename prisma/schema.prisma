@@ -22,10 +22,12 @@ model Objective {
 }
 
 model KeyResult {
-  id           String    @id @default(uuid())
-  isCompleted  Boolean   @default(false)
-  progress     Int
-  description  String
-  objective_id String
-  objective    Objective @relation(fields: [objective_id], references: [id], onDelete: Cascade)
+  id              String    @id @default(uuid())
+  isCompleted     Boolean   @default(false)
+  progress        Int
+  target_progress Int       @default(100)
+  metric          String    @default("Percentage")
+  description     String
+  objective_id    String
+  objective       Objective @relation(fields: [objective_id], references: [id], onDelete: Cascade)
 }

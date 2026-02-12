@@ -5,6 +5,7 @@ import {
   ObjectiveNotFoundException,
   ObjectiveTitleDuplicateException,
 } from './exception/objectiveError';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 
 @Injectable()
 export class ObjectiveService {
@@ -25,8 +26,12 @@ export class ObjectiveService {
           title: objectiveDto.title,
         },
       });
-    } catch (error) {
-      if (error.code === 'P2002') {
+    } catch (error: any) {
+      // console.log(error);
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
         throw new ObjectiveTitleDuplicateException(
           `Objective with title ${objectiveDto.title} already exists!`,
         );
@@ -41,8 +46,11 @@ export class ObjectiveService {
           id: objectiveId,
         },
       });
-    } catch (error) {
-      if (error.code === 'P2025') {
+    } catch (error: any) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
         throw new ObjectiveNotFoundException(
           'Objective not found',
           objectiveId,
@@ -63,13 +71,19 @@ export class ObjectiveService {
           title: updatedObjectiveDto.title,
         },
       });
-    } catch (error) {
-      if (error.code === 'P2002') {
+    } catch (error: any) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
         throw new ObjectiveTitleDuplicateException(
           `Objective with title ${updatedObjectiveDto.title} already exists!`,
         );
       }
-      if (error.code === 'P2025') {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
         throw new ObjectiveNotFoundException(
           'Objective not found',
           objectiveId,
@@ -96,5 +110,39 @@ export class ObjectiveService {
     }
 
     return objective;
+  }
+
+  async isComplete(objectiveId: string) {
+    const objective = await this.prismaService.objective.findUnique({
+      where: { id: objectiveId },
+      include: {
+        keyResult: true,
+      },
+    });
+
+    if (!objective) {
+      throw new ObjectiveNotFoundException(
+        'Objective not found with id ',
+        objectiveId,
+      );
+    }
+    let isObjectCompleted = true;
+    let objectiveProgressSum: number = 0;
+    let count = 0;
+    objective.keyResult.forEach((currKeyResult) => {
+      const keyResultProgressInPercentage =
+        (currKeyResult.progress / currKeyResult.target_progress) * 100;
+      objectiveProgressSum += keyResultProgressInPercentage;
+      if (currKeyResult.progress < currKeyResult.target_progress) {
+        isObjectCompleted = false;
+      }
+      count++;
+    });
+
+    if (count === 0) return { isObjectCompleted: true, objectiveProgress: 100 };
+
+    const objectiveProgress = objectiveProgressSum / count;
+
+    return { isObjectCompleted, objectiveProgress };
   }
 }
