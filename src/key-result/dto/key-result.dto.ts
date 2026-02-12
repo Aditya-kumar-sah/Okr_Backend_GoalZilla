@@ -4,40 +4,26 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  Max,
-  Min,
 } from 'class-validator';
 
-export class KeyResult {
-  @IsBoolean()
-  @IsOptional()
-  isCompleted?: boolean;
-
-  @IsNumber()
-  @IsNotEmpty()
-  @Max(100)
-  @Min(0)
-  progress: number;
-
-  @IsString()
-  @IsNotEmpty()
-  description: string;
-}
-
-export class UpdateKeyResultDto {
+export class KeyResultDto {
   @IsBoolean()
   @IsOptional()
   isCompleted: boolean;
 
   @IsNumber()
   @IsNotEmpty()
-  @Max(100)
-  @Min(0)
-  @IsOptional()
-  progress: number;
+  currentProgress: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  targetProgress: number;
 
   @IsString()
   @IsNotEmpty()
-  @IsOptional()
   description: string;
+
+  @IsString()
+  @IsNotEmpty()
+  metric: string;
 }

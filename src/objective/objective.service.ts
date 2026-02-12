@@ -131,9 +131,9 @@ export class ObjectiveService {
     let count = 0;
     objective.keyResult.forEach((currKeyResult) => {
       const keyResultProgressInPercentage =
-        (currKeyResult.progress / currKeyResult.target_progress) * 100;
+        (currKeyResult.currentProgress / currKeyResult.targetProgress) * 100;
       objectiveProgressSum += keyResultProgressInPercentage;
-      if (currKeyResult.progress < currKeyResult.target_progress) {
+      if (currKeyResult.currentProgress < currKeyResult.targetProgress) {
         isObjectCompleted = false;
       }
       count++;

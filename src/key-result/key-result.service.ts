@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { KeyResult } from './dto/key-result.dto';
+import { KeyResultDto } from './dto/key-result.dto';
 import { ObjectiveNotFoundException } from '../objective/exception/objectiveError';
 import { KeyResultNotFoundException } from './exception/keyResult.exception';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
@@ -24,12 +24,12 @@ export class KeyResultService {
 
     return this.prismaService.keyResult.findMany({
       where: {
-        objective_id: objectiveId,
+        objectiveId: objectiveId,
       },
     });
   }
 
-  async create(objectiveId: string, createKeyResultDto: KeyResult) {
+  async create(objectiveId: string, createKeyResultDto: KeyResultDto) {
     const objective = await this.prismaService.objective.findUnique({
       where: {
         id: objectiveId,
@@ -73,7 +73,7 @@ export class KeyResultService {
     }
   }
 
-  async update(keyResultId: string, keyResult: Partial<KeyResult>) {
+  async update(keyResultId: string, keyResult: KeyResultDto) {
     try {
       return await this.prismaService.keyResult.update({
         where: {
