@@ -16,7 +16,8 @@ export class KeyResultDto {
   currentProgress: number;
 
   @IsNumber()
-  @IsNotEmpty()
+  // @IsNotEmpty()
+  @IsOptional()
   targetProgress: number;
 
   @IsString()
@@ -24,6 +25,7 @@ export class KeyResultDto {
   description: string;
 
   @IsString()
-  @IsNotEmpty()
+  // @IsNotEmpty()
+  @IsOptional()
   metric: string;
 }

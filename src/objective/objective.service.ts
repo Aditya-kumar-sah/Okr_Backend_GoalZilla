@@ -21,13 +21,14 @@ export class ObjectiveService {
 
   async create(objectiveDto: ObjectiveDto) {
     try {
+      console.log("yoos");
+      
       return await this.prismaService.objective.create({
         data: {
           title: objectiveDto.title,
         },
       });
     } catch (error: any) {
-      // console.log(error);
       if (
         error instanceof PrismaClientKnownRequestError &&
         error.code === 'P2002'
