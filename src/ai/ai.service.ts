@@ -110,6 +110,7 @@ export class AiService {
                 description: yup.string().required(),
                 currentProgress: yup.number().required(),
                 targetProgress: yup.number().required(),
+                
                 metric: yup.string().required(),
                 isCompleted: yup.boolean().required(),
             })

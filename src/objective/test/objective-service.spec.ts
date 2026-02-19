@@ -1,5 +1,5 @@
-import { ObjectiveService } from '../objective.service';
 import { Test } from '@nestjs/testing';
+import { ObjectiveService } from '../objective.service';
 import { PrismaService } from '../../prisma.service';
 import {
   ObjectiveNotFoundException,
@@ -7,8 +7,8 @@ import {
 } from '../exception/objectiveError';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 
-describe('ObjectiveService', () => {
-  describe('get All Objective', () => {
+describe('objective-service', () => {
+  describe('get all objectives', () => {
     const mockPrismaService = {
       objective: {
         findMany: jest.fn(),
@@ -26,26 +26,29 @@ describe('ObjectiveService', () => {
       objectiveService = await moduleRef.resolve(ObjectiveService);
     });
 
-    it('should return an array of Objectives', async () => {
+    it('should return all objectives with their key results when objectives exist', async () => {
       const mockObjectiveList = [
         {
           id: '1',
           title: 'Test 1',
+          createdAt: new Date(),
           keyResult: [
             {
               id: '1',
               description: 'Test key result 1',
-              progress: 97,
-              objective_id: '1',
-              target_progress: 100,
+              currentProgress: 97,
+              targetProgress: 100,
+              isCompleted: false,
+              objectiveId: '1',
               metric: 'Percentage',
             },
             {
               id: '2',
               description: 'Test key result 2',
-              progress: 97,
-              objective_id: '1',
-              target_progress: 100,
+              currentProgress: 97,
+              targetProgress: 100,
+              isCompleted: false,
+              objectiveId: '1',
               metric: 'Percentage',
             },
           ],
@@ -63,9 +66,22 @@ describe('ObjectiveService', () => {
         },
       });
     });
+
+    it('should return empty array when no objectives exist', async () => {
+      mockPrismaService.objective.findMany.mockResolvedValue([]);
+
+      const result = await objectiveService.getAll();
+      expect(result).toEqual([]);
+      expect(mockPrismaService.objective.findMany).toHaveBeenCalledTimes(1);
+      expect(mockPrismaService.objective.findMany).toHaveBeenCalledWith({
+        include: {
+          keyResult: true,
+        },
+      });
+    });
   });
 
-  describe('create Objective', () => {
+  describe('create objective', () => {
     const mockPrismaService = {
       objective: {
         create: jest.fn(),
@@ -82,10 +98,12 @@ describe('ObjectiveService', () => {
       }).compile();
       objectiveService = await moduleRef.resolve(ObjectiveService);
     });
-    it('should create Objective and return created objective', async () => {
+
+    it('should create objective and return created objective with all properties', async () => {
       const mockObjective = {
         id: '1',
         title: 'Test 1',
+        createdAt: new Date(),
       };
 
       mockPrismaService.objective.create.mockResolvedValue(mockObjective);
@@ -99,12 +117,13 @@ describe('ObjectiveService', () => {
         },
       });
     });
-    it('should throw ObjectiveTitleDuplicateException if objective with given title already exists ', async () => {
+
+    it('should throw ObjectiveTitleDuplicateException when creating objective with duplicate title', async () => {
       const mockError = new PrismaClientKnownRequestError(
-        'Unique constraint failed',
+        'Unique constraint failed on the fields: (title)',
         {
           code: 'P2002',
-          clientVersion: '4.0.0',
+          clientVersion: '5.x',
         },
       );
 
@@ -123,7 +142,7 @@ describe('ObjectiveService', () => {
     });
   });
 
-  describe('delete Objective', () => {
+  describe('delete objective by id', () => {
     const mockPrismaService = {
       objective: {
         delete: jest.fn(),
@@ -140,10 +159,12 @@ describe('ObjectiveService', () => {
       }).compile();
       objectiveService = await moduleRef.resolve(ObjectiveService);
     });
-    it('should delete Objective and return deleted objective', async () => {
+
+    it('should delete objective and return deleted objective when objective exists', async () => {
       const mockObjective = {
         id: '1',
         title: 'Test 1',
+        createdAt: new Date(),
       };
 
       mockPrismaService.objective.delete.mockResolvedValue(mockObjective);
@@ -157,12 +178,13 @@ describe('ObjectiveService', () => {
         },
       });
     });
-    it('should throw ObjectiveNotFoundException if objective with given id do not exists ', async () => {
+
+    it('should throw ObjectiveNotFoundException when deleting non-existent objective', async () => {
       const mockError = new PrismaClientKnownRequestError(
-        'Unique constraint failed',
+        'An operation failed because it depends on one or more records that were required but not found. Record to delete does not exist.',
         {
           code: 'P2025',
-          clientVersion: '4.0.0',
+          clientVersion: '5.x',
         },
       );
 
@@ -181,7 +203,7 @@ describe('ObjectiveService', () => {
     });
   });
 
-  describe('update Objective', () => {
+  describe('update objective by id', () => {
     const mockPrismaService = {
       objective: {
         update: jest.fn(),
@@ -198,37 +220,42 @@ describe('ObjectiveService', () => {
       }).compile();
       objectiveService = await moduleRef.resolve(ObjectiveService);
     });
-    it('should update Objective and return updated objective', async () => {
-      mockPrismaService.objective.update.mockResolvedValue({
-        id: '1',
-        title: 'Test 2',
-      });
 
-      const result = await objectiveService.update('1', { title: 'Test 2' });
-      expect(result).toEqual({ id: '1', title: 'Test 2' });
+    it('should update objective and return updated objective when objective exists', async () => {
+      const updatedObjective = {
+        id: '1',
+        title: 'Updated Title',
+        createdAt: new Date(),
+      };
+
+      mockPrismaService.objective.update.mockResolvedValue(updatedObjective);
+
+      const result = await objectiveService.update('1', { title: 'Updated Title' });
+      expect(result).toEqual(updatedObjective);
       expect(mockPrismaService.objective.update).toHaveBeenCalledTimes(1);
       expect(mockPrismaService.objective.update).toHaveBeenCalledWith({
         where: {
           id: '1',
         },
         data: {
-          title: 'Test 2',
+          title: 'Updated Title',
         },
       });
     });
-    it('should throw ObjectiveNotFoundException if objective with given id do not exists ', async () => {
+
+    it('should throw ObjectiveNotFoundException when updating non-existent objective', async () => {
       const mockError = new PrismaClientKnownRequestError(
-        'Unique constraint failed',
+        'An operation failed because it depends on one or more records that were required but not found. Record to update does not exist.',
         {
           code: 'P2025',
-          clientVersion: '4.0.0',
+          clientVersion: '5.x',
         },
       );
 
       mockPrismaService.objective.update.mockRejectedValue(mockError);
 
       await expect(
-        objectiveService.update('1', { title: 'Test' }),
+        objectiveService.update('1', { title: 'Updated Title' }),
       ).rejects.toThrow(ObjectiveNotFoundException);
 
       expect(mockPrismaService.objective.update).toHaveBeenCalledTimes(1);
@@ -237,23 +264,24 @@ describe('ObjectiveService', () => {
           id: '1',
         },
         data: {
-          title: 'Test',
+          title: 'Updated Title',
         },
       });
     });
-    it('should throw ObjectiveTitleDuplicateException if objective with given updated title already exists ', async () => {
+
+    it('should throw ObjectiveTitleDuplicateException when updating objective with duplicate title', async () => {
       const mockError = new PrismaClientKnownRequestError(
-        'Unique constraint failed',
+        'Unique constraint failed on the fields: (title)',
         {
           code: 'P2002',
-          clientVersion: '4.0.0',
+          clientVersion: '5.x',
         },
       );
 
       mockPrismaService.objective.update.mockRejectedValue(mockError);
 
       await expect(
-        objectiveService.update('1', { title: 'Test' }),
+        objectiveService.update('1', { title: 'Existing Title' }),
       ).rejects.toThrow(ObjectiveTitleDuplicateException);
 
       expect(mockPrismaService.objective.update).toHaveBeenCalledTimes(1);
@@ -262,13 +290,13 @@ describe('ObjectiveService', () => {
           id: '1',
         },
         data: {
-          title: 'Test',
+          title: 'Existing Title',
         },
       });
     });
   });
 
-  describe('get Objective by Id', () => {
+  describe('get objective by id', () => {
     const mockPrismaService = {
       objective: {
         findUnique: jest.fn(),
@@ -285,19 +313,25 @@ describe('ObjectiveService', () => {
       }).compile();
       objectiveService = await moduleRef.resolve(ObjectiveService);
     });
-    it('should return objective with given id such that objective with that id exist', async () => {
+
+    it('should return objective with all key results when objective exists', async () => {
       const mockObjective = {
         id: '1',
         title: 'Test 1',
+        createdAt: new Date(),
         keyResult: [
           {
             id: '1',
             description: 'Test 1 key',
-            progress: 100,
-            objective_id: '1',
+            currentProgress: 100,
+            targetProgress: 100,
+            isCompleted: false,
+            objectiveId: '1',
+            metric: 'Percentage',
           },
         ],
       };
+
       mockPrismaService.objective.findUnique.mockResolvedValue(mockObjective);
 
       const result = await objectiveService.getObjectiveById('1');
@@ -312,7 +346,8 @@ describe('ObjectiveService', () => {
         },
       });
     });
-    it('should throw ObjectiveNotFoundException if objective with given id do not exists ', async () => {
+
+    it('should throw ObjectiveNotFoundException when objective does not exist', async () => {
       mockPrismaService.objective.findUnique.mockResolvedValue(null);
 
       await expect(objectiveService.getObjectiveById('1')).rejects.toThrow(
@@ -331,23 +366,26 @@ describe('ObjectiveService', () => {
     });
   });
 
-  const getMockObjective = (progress: number[][]) => {
+  const getMockObjective = (progressData: number[][]) => {
     return {
       id: '1',
       title: 'Test 1',
-      keyResult: progress.map((currentProgress, index) => {
+      createdAt: new Date(),
+      keyResult: progressData.map((progress, index) => {
         return {
-          id: index,
-          progress: currentProgress[0],
-          target_progress: currentProgress[1],
-          isCompleted: false,
-          objective_id: '1',
+          id: String(index),
+          currentProgress: progress[0],
+          targetProgress: progress[1],
+          isCompleted: progress[0] >= progress[1],
+          objectiveId: '1',
+          description: `Key Result ${index + 1}`,
+          metric: 'Percentage',
         };
       }),
     };
   };
 
-  describe('is Objective completed', () => {
+  describe('check if objective is complete', () => {
     const mockPrismaService = {
       objective: {
         findUnique: jest.fn(),
@@ -365,59 +403,76 @@ describe('ObjectiveService', () => {
       objectiveService = await moduleRef.resolve(ObjectiveService);
     });
 
-    // it.each([[[100, 100]], [[100]]])(
-    //   'should return true if all keyResults are %p',
-    //   async (parameter) => {
-    //     mockPrismaService.objective.findUnique.mockResolvedValue(
-    //       getMockObjective(parameter),
-    //     );
-    //     const result = await objectiveService.isComplete('1');
-    //     expect(result).toBeTruthy();
-    //   },
-    // );
-
-    it.each([
-      {
-        progress: [[100, 100]],
-        message:
-          'isObjectCompleted as true and objectiveProgress as 100% if progress of every keyResult is 100%',
-        expected: { isObjectCompleted: true, objectiveProgress: 100 },
-      },
-      {
-        progress: [
-          [100, 100],
-          [120, 120],
-        ],
-        message:
-          'isObjectCompleted as true and objectiveProgress as 100% if progress of every keyResult is equal to target progress',
-        expected: { isObjectCompleted: true, objectiveProgress: 100 },
-      },
-      {
-        progress: [
-          [100, 100],
-          [70, 100],
-        ],
-        message:
-          'isObjectCompleted as false and objectiveProgress not as 100% if progress of one of keyResult is not equal to target progress',
-        expected: { isObjectCompleted: false, objectiveProgress: 85 },
-      },
-    ])(`it should return $message`, async (parameter) => {
+    it('should return isObjectCompleted as true and objectiveProgress as 100 when single key result reaches target progress', async () => {
       mockPrismaService.objective.findUnique.mockResolvedValue(
-        getMockObjective(parameter.progress),
+        getMockObjective([[100, 100]]),
       );
+
       const result = await objectiveService.isComplete('1');
-      expect(result).toEqual(parameter.expected);
+      expect(result).toEqual({ isObjectCompleted: true, objectiveProgress: 100 });
     });
 
-    // it('should return false if one of the key-result is not completed', async () => {
-    //   mockPrismaService.objective.findUnique.mockResolvedValue(
-    //     getMockObjective([100, 50]),
-    //   );
-    //   const result = await objectiveService.isComplete('1');
-    //   expect(result).toBeFalsy();
-    // });
+    it('should return isObjectCompleted as true and objectiveProgress as 100 when all key results reach target progress', async () => {
+      mockPrismaService.objective.findUnique.mockResolvedValue(
+        getMockObjective([
+          [100, 100],
+          [120, 120],
+        ]),
+      );
 
-    it('should throw ObjectiveNotFoundException if objective with given id do not exists ', async () => {
+      const result = await objectiveService.isComplete('1');
+      expect(result).toEqual({ isObjectCompleted: true, objectiveProgress: 100 });
+    });
+
+    it('should return isObjectCompleted as false and correct objectiveProgress when one key result is below target progress', async () => {
+      mockPrismaService.objective.findUnique.mockResolvedValue(
+        getMockObjective([
+          [100, 100],
+          [70, 100],
+        ]),
+      );
+
+      const result = await objectiveService.isComplete('1');
+      expect(result).toEqual({ isObjectCompleted: false, objectiveProgress: 85 });
+    });
+
+    it('should return isObjectCompleted as false and zero objectiveProgress when all key results have no progress', async () => {
+      mockPrismaService.objective.findUnique.mockResolvedValue(
+        getMockObjective([
+          [0, 100],
+          [0, 100],
+        ]),
+      );
+
+      const result = await objectiveService.isComplete('1');
+      expect(result).toEqual({ isObjectCompleted: false, objectiveProgress: 0 });
+    });
+
+    it('should return isObjectCompleted as false and 50 percent objectiveProgress when half of key result progress is complete', async () => {
+      mockPrismaService.objective.findUnique.mockResolvedValue(
+        getMockObjective([[50, 100]]),
+      );
+
+      const result = await objectiveService.isComplete('1');
+      expect(result).toEqual({ isObjectCompleted: false, objectiveProgress: 50 });
+    });
+
+    it('should return isObjectCompleted as true and objectiveProgress as 100 when objective has no key results', async () => {
+      const objectiveWithNoKeyResults = {
+        id: '1',
+        title: 'Test 1',
+        createdAt: new Date(),
+        keyResult: [],
+      };
+      mockPrismaService.objective.findUnique.mockResolvedValue(
+        objectiveWithNoKeyResults,
+      );
+
+      const result = await objectiveService.isComplete('1');
+      expect(result).toEqual({ isObjectCompleted: true, objectiveProgress: 100 });
+    });
+
+    it('should throw ObjectiveNotFoundException when objective does not exist', async () => {
       mockPrismaService.objective.findUnique.mockResolvedValue(null);
 
       await expect(objectiveService.isComplete('1')).rejects.toThrow(

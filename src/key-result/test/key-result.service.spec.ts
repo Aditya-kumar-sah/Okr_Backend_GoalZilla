@@ -5,8 +5,8 @@ import { ObjectiveNotFoundException } from '../../objective/exception/objectiveE
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { KeyResultNotFoundException } from '../exception/keyResult.exception';
 
-describe('key-result', () => {
-  describe('get keyResult for a particular objectiveId', () => {
+describe('key-result-service', () => {
+  describe('get key results for an objective', () => {
     const mockPrismaService = {
       keyResult: {
         findMany: jest.fn(),
@@ -27,24 +27,30 @@ describe('key-result', () => {
       keyResultService = await moduleRef.resolve(KeyResultService);
     });
 
-    it('should return all the key results corresponding to the given objective id', async () => {
+    it('should return all key results for the given objective when objective exists', async () => {
       const mockKeyResultList = [
         {
           id: '1',
-          description: 'Test key result 1',
-          progress: 97,
-          objective_id: '1',
+          description: 'Increase unit test coverage',
+          currentProgress: 30,
+          targetProgress: 100,
+          metric: 'percent',
+          isCompleted: false,
+          objectiveId: '1',
         },
         {
           id: '2',
-          description: 'Test key result 2',
-          progress: 97,
-          objective_id: '1',
+          description: 'Reduce bug backlog',
+          currentProgress: 10,
+          targetProgress: 50,
+          metric: 'items',
+          isCompleted: false,
+          objectiveId: '1',
         },
       ];
       const mockObjective = {
         id: '1',
-        title: 'Test',
+        title: 'Improve Quality',
       };
 
       mockPrismaService.keyResult.findMany.mockResolvedValue(mockKeyResultList);
@@ -55,7 +61,7 @@ describe('key-result', () => {
       expect(mockPrismaService.keyResult.findMany).toHaveBeenCalledTimes(1);
       expect(mockPrismaService.keyResult.findMany).toHaveBeenCalledWith({
         where: {
-          objective_id: '1',
+          objectiveId: '1',
         },
       });
       expect(mockPrismaService.objective.findUnique).toHaveBeenCalledTimes(1);
@@ -65,7 +71,8 @@ describe('key-result', () => {
         },
       });
     });
-    it('should return ObjectiveNotFoundException if objective with given id not found', async () => {
+
+    it('should throw ObjectiveNotFoundException when objective with given id does not exist', async () => {
       mockPrismaService.objective.findUnique.mockResolvedValue(null);
 
       await expect(keyResultService.getAll('1')).rejects.toThrow(
@@ -81,7 +88,7 @@ describe('key-result', () => {
     });
   });
 
-  describe('create keyResult for a particular objectiveId', () => {
+  describe('create key result for an objective', () => {
     const mockPrismaService = {
       keyResult: {
         create: jest.fn(),
@@ -102,17 +109,20 @@ describe('key-result', () => {
       keyResultService = await moduleRef.resolve(KeyResultService);
     });
 
-    it('should create and return the key result corresponding to the given objective id if objective exist', async () => {
+    it('should create and return key result when objective exists', async () => {
       const mockKeyResult = {
         id: '1',
-        description: 'Test key result 1',
-        progress: 97,
-        objective_id: '1',
+        description: 'Increase unit test coverage',
+        currentProgress: 0,
+        targetProgress: 100,
+        metric: 'percent',
+        isCompleted: false,
+        objectiveId: '1',
       };
 
       const mockObjective = {
         id: '1',
-        title: 'Test',
+        title: 'Improve Quality',
       };
 
       mockPrismaService.keyResult.create.mockResolvedValue(mockKeyResult);
@@ -120,15 +130,21 @@ describe('key-result', () => {
 
       const result = await keyResultService.create('1', {
         description: mockKeyResult.description,
-        progress: mockKeyResult.progress,
-      });
+        currentProgress: mockKeyResult.currentProgress,
+        targetProgress: mockKeyResult.targetProgress,
+        metric: mockKeyResult.metric,
+        isCompleted: mockKeyResult.isCompleted,
+      } as any);
 
       expect(result).toBe(mockKeyResult);
       expect(mockPrismaService.keyResult.create).toHaveBeenCalledTimes(1);
       expect(mockPrismaService.keyResult.create).toHaveBeenCalledWith({
         data: {
           description: mockKeyResult.description,
-          progress: mockKeyResult.progress,
+          currentProgress: mockKeyResult.currentProgress,
+          targetProgress: mockKeyResult.targetProgress,
+          metric: mockKeyResult.metric,
+          isCompleted: mockKeyResult.isCompleted,
           objective: {
             connect: { id: '1' },
           },
@@ -141,12 +157,13 @@ describe('key-result', () => {
         },
       });
     });
-    it('should return ObjectiveNotFoundException if objective with given id is not found', async () => {
+
+    it('should throw ObjectiveNotFoundException when creating key result for non-existent objective', async () => {
       mockPrismaService.objective.findUnique.mockResolvedValue(null);
 
-      await expect(keyResultService.getAll('1')).rejects.toThrow(
-        ObjectiveNotFoundException,
-      );
+      await expect(
+        keyResultService.create('1', { description: 'x', currentProgress: 0 } as any),
+      ).rejects.toThrow(ObjectiveNotFoundException);
 
       expect(mockPrismaService.objective.findUnique).toHaveBeenCalledTimes(1);
       expect(mockPrismaService.objective.findUnique).toHaveBeenCalledWith({
@@ -157,7 +174,7 @@ describe('key-result', () => {
     });
   });
 
-  describe('delete keyResult for a particular keyResultId', () => {
+  describe('delete key result by id', () => {
     const mockPrismaService = {
       keyResult: {
         delete: jest.fn(),
@@ -175,12 +192,15 @@ describe('key-result', () => {
       keyResultService = await moduleRef.resolve(KeyResultService);
     });
 
-    it('should delete and return the deleted key result if that keyResult exist', async () => {
+    it('should delete and return the deleted key result when it exists', async () => {
       const mockKeyResult = {
         id: '1',
-        description: 'Test key result 1',
-        progress: 97,
-        objective_id: '1',
+        description: 'Reduce bug backlog',
+        currentProgress: 10,
+        targetProgress: 50,
+        metric: 'items',
+        isCompleted: false,
+        objectiveId: '1',
       };
 
       mockPrismaService.keyResult.delete.mockResolvedValue(mockKeyResult);
@@ -195,10 +215,11 @@ describe('key-result', () => {
         },
       });
     });
-    it('should return KeyResultNotFoundException if keyResult with given id is not found', async () => {
+
+    it('should throw KeyResultNotFoundException when delete target does not exist', async () => {
       const mockError = new PrismaClientKnownRequestError('NOT FOUND', {
         code: 'P2025',
-        clientVersion: '4.0.0',
+        clientVersion: '5.x',
       });
       mockPrismaService.keyResult.delete.mockRejectedValue(mockError);
 
@@ -215,7 +236,7 @@ describe('key-result', () => {
     });
   });
 
-  describe('update keyResult with given id', () => {
+  describe('update key result by id', () => {
     const mockPrismaService = {
       keyResult: {
         update: jest.fn(),
@@ -234,18 +255,22 @@ describe('key-result', () => {
       keyResultService = await moduleRef.resolve(KeyResultService);
     });
 
-    it('should update keyResult and return updated object', async () => {
+    it('should update key result and return updated object when it exists', async () => {
       const keyResultId = '123';
-      const updatePayload = { description: 'Updated Title' };
+      const updatePayload = { description: 'Updated Description', currentProgress: 60 };
 
       const updatedKeyResult = {
         id: keyResultId,
-        title: 'Updated Title',
+        description: updatePayload.description,
+        currentProgress: updatePayload.currentProgress,
+        targetProgress: 100,
+        isCompleted: false,
+        objectiveId: '1',
       };
 
       mockPrismaService.keyResult.update.mockResolvedValue(updatedKeyResult);
 
-      const result = await keyResultService.update(keyResultId, updatePayload);
+      const result = await keyResultService.update(keyResultId, updatePayload as any);
 
       expect(result).toEqual(updatedKeyResult);
       expect(mockPrismaService.keyResult.update).toHaveBeenCalledWith({
@@ -255,7 +280,7 @@ describe('key-result', () => {
       expect(mockPrismaService.keyResult.update).toHaveBeenCalledTimes(1);
     });
 
-    it('should throw KeyResultNotFoundException if keyResult with given id not found', async () => {
+    it('should throw KeyResultNotFoundException when updating non-existent key result', async () => {
       const keyResultId = '123';
 
       const prismaError = new PrismaClientKnownRequestError('Not found', {
@@ -266,7 +291,7 @@ describe('key-result', () => {
       mockPrismaService.keyResult.update.mockRejectedValue(prismaError);
 
       await expect(
-        keyResultService.update(keyResultId, { description: 'New' }),
+        keyResultService.update(keyResultId, { description: 'New' } as any),
       ).rejects.toThrow(KeyResultNotFoundException);
 
       expect(mockPrismaService.keyResult.update).toHaveBeenCalledWith({
