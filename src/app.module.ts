@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ObjectiveModule } from './objective/objective.module';
 import { ConfigModule } from '@nestjs/config';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -8,6 +9,7 @@ import { ConfigModule } from '@nestjs/config';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    AiModule,
   ],
 })
 export class AppModule {}
